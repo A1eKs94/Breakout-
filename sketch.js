@@ -1,11 +1,14 @@
 let paddle;
 let ball;
 let lives = 3;
+let bricks = [];
+let score = 0;
 
 function setup() {
   createCanvas(600, 400);
   paddle = new Paddle();
   ball = new Ball();
+  createBricks();
 }
 
 function draw() {
@@ -29,6 +32,24 @@ function draw() {
       ball = new Ball(); // reinicia la pelota
     }
   }
+  for (let i = bricks.length - 1; i >= 0; i--) {
+    let b = bricks[i];
+    b.show();
+    if (ball.hits(b)) {
+      b.hit(); // cuando la pelota toca el bloque
+      ball.vy *= -1; // pelota rebota hacia arriba
+      if (b.isDestroyed()) {
+        bricks.splice(i, 1); // elimina el bloque si se destruye
+        score++; // aumenta score
+      }
+    }
+  }
+
+  // marcador
+  fill(255);
+  textSize(16);
+  text(`Vidas: ${lives}`, 10, height - 10);
+  text(`Puntos: ${score}`, width - 100, height - 10);
 }
 
 function keyPressed() {
@@ -109,5 +130,57 @@ class Ball {
   // pelota fuera de pantalla
   offScreen() {
     return this.y > height + this.r;
+  }
+
+  hits(brick) {
+    return (
+      !brick.destroyed &&
+      this.x > brick.x &&
+      this.x < brick.x + brick.w &&
+      this.y - this.r < brick.y + brick.h &&
+      this.y + this.r > brick.y
+    );
+  }
+}
+
+class Brick {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.w = 60;
+    this.h = 20;
+    this.destroyed = false;
+  }
+
+  show() {
+    if (!this.destroyed) {
+      fill(140, 173, 255); // color bloques
+      rect(this.x, this.y, this.w, this.h);
+    }
+  }
+
+  hit() {
+    this.destroyed = true;
+  }
+
+  isDestroyed() {
+    return this.destroyed;
+  }
+}
+
+function createBricks() {
+  let cols = 8;
+  let rows = 3;
+  let padding = 10;
+  let blockWidth = (width - padding * (cols + 1)) / cols; // ajuste de asncho de bloques
+  let blockHeight = 20;
+
+  //
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      let x = padding + j * (blockWidth + padding); // ubicacion horizontal bloque
+      let y = padding + i * (blockHeight + padding); // ubicacion vertical bloque
+      bricks.push(new Brick(x, y, blockWidth, blockHeight));
+    }
   }
 }
