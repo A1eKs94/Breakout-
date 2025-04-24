@@ -1,14 +1,34 @@
 let paddle;
+let ball;
+let lives = 3;
 
 function setup() {
   createCanvas(600, 400);
   paddle = new Paddle();
+  ball = new Ball();
 }
 
 function draw() {
   background(51);
   paddle.update();
   paddle.show();
+
+  ball.update();
+  ball.checkPaddle(paddle);
+  ball.show();
+
+  if (ball.offScreen()) {
+    lives--; // resta una vida al perder pelota
+    if (lives <= 0) {
+      noLoop(); // detiene el juego
+      textSize(32);
+      fill(255, 0, 0);
+      textAlign(CENTER, CENTER);
+      text("¡Game Over!", width / 2, height / 2);
+    } else {
+      ball = new Ball(); // reinicia la pelota
+    }
+  }
 }
 
 function keyPressed() {
@@ -40,5 +60,54 @@ class Paddle {
   show() {
     fill(255);
     rect(this.x, height - this.h - 10, this.w, this.h);
+  }
+}
+
+// creacion de pelota
+class Ball {
+  constructor() {
+    this.r = 10;
+    this.x = width / 2;
+    this.y = height / 2;
+    this.vx = random([-1, 1]) * 5;
+    this.vy = -5;
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // rebote a izquierda o derecha
+    if (this.x < this.r || this.x > width - this.r) {
+      this.vx *= -1;
+    }
+
+    // rebote con el techo
+    if (this.y < this.r) {
+      this.vy *= -1;
+    }
+  }
+
+  show() {
+    fill(255);
+    ellipse(this.x, this.y, this.r * 2);
+  }
+
+  // col con paddle
+  checkPaddle(p) {
+    if (
+      this.y + this.r > height - p.h - 10 &&
+      this.x > p.x &&
+      this.x < p.x + p.w
+    ) {
+      // cambia la direccion al rebotar en eje Y
+      this.vy *= -1;
+      this.y = height - p.h - 10 - this.r;
+    }
+  }
+
+  // pelota fuera de pantalla
+  offScreen() {
+    return this.y > height + this.r;
   }
 }
